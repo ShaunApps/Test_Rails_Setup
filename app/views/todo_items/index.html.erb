@@ -1,0 +1,152 @@
+<p id="notice"><%= notice %></p>
+
+<h1>Listing Todo Items</h1>
+
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+<script src="bitcoinprices.js"></script>
+<script>
+    $(document).ready(function() {
+        bitcoinprices.init({
+
+            // Where we get bitcoinaverage data
+            url: "https://api.bitcoinaverage.com/ticker/all",
+
+            // Which of bitcoinaverages value we use to present prices
+            marketRateVariable: "24h_avg",
+
+            // Which currencies are in shown to the user
+            currencies: ["BTC", "USD", "EUR", "CNY"],
+
+            // Special currency symbol artwork
+            symbols: {
+                "BTC": "<i class='fa fa-btc'></i>"
+            },
+
+            // Which currency we show user by the default if
+            // no currency is selected
+            defaultCurrency: "BTC",
+
+            // How the user is able to interact with the prices
+            ux : {
+                // Make everything with data-btc-price HTML attribute clickable
+                clickPrices : true,
+
+                // Build Bootstrap dropdown menu for currency switching
+                menu : true,
+
+                // Allow user to cycle through currency choices in currency:
+
+                clickableCurrencySymbol:  true
+            },
+
+            // Allows passing the explicit jQuery version to bitcoinprices.
+            // This is useful if you are using modular javascript (AMD/UMD/require()),
+            // but for most normal usage you don't need this
+            jQuery: jQuery,
+
+            // Price source data attribute
+            priceAttribute: "data-btc-price",
+
+            // Price source currency for data-btc-price attribute.
+            // E.g. if your shop prices are in USD
+            // but converted to BTC when you do Bitcoin
+            // checkout, put USD here.
+            priceOrignalCurrency: "BTC"
+
+        });
+    });
+</script>
+<script>
+  $(document).on("marketdataavailable", function() {
+            var inputAmount = $("#input-amount");
+            var outputAmount = $("#output-amount");
+            var inputCurrency = $("#input-currency");
+            var outputCurrency = $("#output-currency");
+
+            function updateConversion() {
+
+                // Reset output in the case we run into exception
+                outputAmount.val("");
+
+                var input = inputCurrency.val();
+                var output = outputCurrency.val();
+                var amount = parseFloat(inputAmount.val(), 10);
+                try {
+                    var val = bitcoinprices.convert(amount, input, output);
+                    val = bitcoinprices.formatPrice(val, output, false);
+                    outputAmount.val(val);
+                } catch(e) {
+                    throw e;
+                }
+            }
+
+            inputAmount.change(updateConversion);
+            inputAmount.on("keyup", updateConversion);
+            inputCurrency.change(updateConversion);
+            outputCurrency.change(updateConversion);
+
+            // Initial take off
+            updateConversion();
+
+        });
+    </script>
+
+</head>
+<table>
+  <thead>
+    <tr>
+      <th>Description</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @todo_items.each do |todo_item| %>
+      <tr>
+        <td><%= todo_item.description %></td>
+        <td><%= link_to 'Show', todo_item %></td>
+        <td><%= link_to 'Edit', edit_todo_item_path(todo_item) %></td>
+        <td><%= link_to 'Destroy', todo_item, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Todo item', new_todo_item_path %>
+
+
+<div class="row">
+           <div class="col-md-4">
+               <h2>Input</h2>
+               <h4>Amount</h4>
+               <p>
+                   <input id="input-amount" value="1.0">
+               </p>
+               <h4>Currency</h4>
+               <select id="input-currency">
+                   <option selected="" value="BTC">BTC</option>
+                   <option value="USD">USD</option>
+                   <option value="EUR">EUR</option>
+               </select>
+           </div>
+
+           <div class="col-md-4">
+               <h2>Output</h2>
+
+               <h4>Amount</h4>
+               <p>
+                   <input id="output-amount" readonly="">
+               </p>
+
+               <h4>Currency</h4>
+               <select id="output-currency">
+                   <option value="BTC">BTC</option>
+                   <option selected="" value="USD">USD</option>
+                   <option value="EUR">EUR</option>
+               </select>
+           </div>
+
+       </div>
